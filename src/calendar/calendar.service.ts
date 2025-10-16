@@ -16,6 +16,7 @@ interface PandaMatch {
 interface PandaLeague {
   id: number;
   name: string;
+  videogame: { name: string };
 }
 
 @Injectable()
@@ -25,6 +26,7 @@ export class CalendarService {
   private lastUpdate: Map<number, number> = new Map();
   private readonly API_BASE = 'https://api.pandascore.co/leagues';
   private readonly TOKEN = process.env.PANDASCORE_TOKEN;
+  private readonly CACHE_DURATION_IN_MIN = 5;
 
   private async fetchMatches(leagueId: number): Promise<PandaMatch[]> {
     const endpoints = ['running', 'past', 'upcoming'];
@@ -57,7 +59,8 @@ export class CalendarService {
     const now = Date.now();
     const lastUpdateTime = this.lastUpdate.get(leagueId) || 0;
     const needsRefresh =
-      !this.cachedCalendar.has(leagueId) || now - lastUpdateTime > 300000;
+      !this.cachedCalendar.has(leagueId) ||
+      now - lastUpdateTime > this.CACHE_DURATION_IN_MIN * 60 * 1000;
 
     this.logger.log(
       `${needsRefresh ? '🔄 Rafraîchissement' : '📦 Cache'} du calendrier pour la league ${leagueId}`,
@@ -68,7 +71,7 @@ export class CalendarService {
       const league = await this.fetchLeague(leagueId);
 
       const cal = ical({
-        name: league.name,
+        name: `${league.name} ${league.videogame.name}`,
         timezone: 'UTC',
       });
 
