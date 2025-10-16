@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import fetch from 'node-fetch';
 import ical from 'ical-generator';
 import { DateTime } from 'luxon';
 
