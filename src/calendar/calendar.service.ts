@@ -80,11 +80,6 @@ export class CalendarService {
 
         const start = DateTime.fromISO(match.scheduled_at, { zone: 'utc' });
         const end = start.plus({ hours: match.number_of_games });
-
-        const teams = match.opponents
-          .map((o) => o.opponent.acronym)
-          .join(' vs ');
-
         let title: string;
 
         if (match.status === 'finished' && match.results.length >= 2) {
@@ -94,8 +89,14 @@ export class CalendarService {
           const team2 = match.opponents[1].opponent.acronym;
 
           title = `${team1} ${score1} - ${score2} ${team2}`;
+        } else if (match.opponents.length >= 2) {
+          const teams = match.opponents
+            .map((o) => o.opponent.acronym)
+            .join(' vs ');
+
+          title = teams;
         } else {
-          title = teams || match.name;
+          title = match.name;
         }
 
         cal.createEvent({
