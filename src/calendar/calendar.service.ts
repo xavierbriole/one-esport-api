@@ -56,11 +56,14 @@ export class CalendarService {
   public async getCalendar(leagueId: number): Promise<string> {
     const now = Date.now();
     const lastUpdateTime = this.lastUpdate.get(leagueId) || 0;
+    const needsRefresh =
+      !this.cachedCalendar.has(leagueId) || now - lastUpdateTime > 300000;
 
-    if (!this.cachedCalendar.has(leagueId) || now - lastUpdateTime > 300000) {
-      this.logger.log(
-        `🔄 Rafraîchissement du calendrier PandaScore pour la league ${leagueId}...`,
-      );
+    this.logger.log(
+      `${needsRefresh ? '🔄 Rafraîchissement' : '📦 Cache'} du calendrier pour la league ${leagueId}`,
+    );
+
+    if (needsRefresh) {
       const matches = await this.fetchMatches(leagueId);
       const league = await this.fetchLeague(leagueId);
 
