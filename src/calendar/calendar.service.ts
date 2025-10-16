@@ -6,8 +6,8 @@ interface PandaMatch {
   id: number;
   name: string;
   status: 'canceled' | 'finished' | 'not_started' | 'postponed' | 'running';
-  begin_at: string | null;
-  end_at: string | null;
+  scheduled_at: string | null;
+  number_of_games: number;
   opponents: { opponent: { acronym: string } }[];
   results: { score: number; team_id: number }[];
   tournament: { name: string };
@@ -25,7 +25,6 @@ export class CalendarService {
   private lastUpdate: Map<number, number> = new Map();
   private readonly API_BASE = 'https://api.pandascore.co/leagues';
   private readonly TOKEN = process.env.PANDASCORE_TOKEN;
-  private readonly TIMEZONE = 'UTC';
 
   private async fetchMatches(leagueId: number): Promise<PandaMatch[]> {
     const endpoints = ['running', 'past', 'upcoming'];
@@ -67,16 +66,14 @@ export class CalendarService {
 
       const cal = ical({
         name: league.name,
-        timezone: this.TIMEZONE,
+        timezone: 'UTC',
       });
 
       for (const match of matches) {
-        if (!match.begin_at) continue;
+        if (!match.scheduled_at) continue;
 
-        const start = DateTime.fromISO(match.begin_at, { zone: 'utc' });
-        const end = match.end_at
-          ? DateTime.fromISO(match.end_at, { zone: 'utc' })
-          : start.plus({ hours: 1 });
+        const start = DateTime.fromISO(match.scheduled_at, { zone: 'utc' });
+        const end = start.plus({ hours: match.number_of_games });
 
         const teams = match.opponents
           .map((o) => o.opponent.acronym)
@@ -101,7 +98,7 @@ export class CalendarService {
           summary: title,
           description: `${match.tournament.name} - ${match.status}`,
           uid: `match-${match.id}@pandascore` as any,
-          timezone: this.TIMEZONE,
+          timezone: 'UTC',
         });
       }
 
